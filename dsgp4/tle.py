@@ -1,7 +1,7 @@
 import datetime
 import numpy as np
 import copy
-import torch
+import jax.numpy as jnp
 
 from . import util
 _, MU_EARTH, _, _, _, _, _, _=util.get_gravity_constants('wgs-84')
@@ -117,9 +117,9 @@ def load_from_lines(lines, opsmode='i'):
         data['line1'] = line
         #for SGP4:
         data['_epochdays'] = epochdays
-        data['_bstar'] = torch.tensor(float(line[53]+'.'+line[54:59])*pow(10, int(line[59:61])))
-        data['_ndot'] = torch.tensor(float(line[33:43])/(xpdotp*1440.0))
-        data['_nddot']= torch.tensor(float(line[44] + '.' + line[45:50])/(xpdotp*1440.0*1440))
+        data['_bstar'] = jnp.array(float(line[53]+'.'+line[54:59])*pow(10, int(line[59:61])))
+        data['_ndot'] = jnp.array(float(line[33:43])/(xpdotp*1440.0))
+        data['_nddot']= jnp.array(float(line[44] + '.' + line[45:50])/(xpdotp*1440.0*1440))
 
     else:
         raise ValueError('First line not compatible with TLE format.')
@@ -151,21 +151,21 @@ def load_from_lines(lines, opsmode='i'):
         data['revolution_number_at_epoch'] = int(line[63:68])
         data['line2'] = line
         #for SGP4:
-        data['_inclo']=torch.tensor(np.deg2rad(float(line[8:16])))
-        data['_nodeo']=torch.tensor(np.deg2rad(float(line[17:25])))
-        data['_ecco'] =torch.tensor(float('0.'+line[26:33].replace(' ', '0')))
-        data['_argpo']=torch.tensor(np.deg2rad(float(line[34:42])))
-        data['_mo']=torch.tensor(np.deg2rad(float(line[43:51])))
-        data['_no_kozai'] =torch.tensor(float(line[52:63]) / xpdotp);
+        data['_inclo']=jnp.array(np.deg2rad(float(line[8:16])))
+        data['_nodeo']=jnp.array(np.deg2rad(float(line[17:25])))
+        data['_ecco'] =jnp.array(float('0.'+line[26:33].replace(' ', '0')))
+        data['_argpo']=jnp.array(np.deg2rad(float(line[34:42])))
+        data['_mo']=jnp.array(np.deg2rad(float(line[43:51])))
+        data['_no_kozai'] =jnp.array(float(line[52:63]) / xpdotp);
 
     else:
         raise ValueError('Second line not compatible with TLE format.')
 
     mon,day,hr,minute,sec = util.days2mdhms(year, epochdays);
     sec_whole, sec_fraction = divmod(sec, 1.0)
-    data['_epochyr'] = torch.tensor(year)
-    data['_jdsatepoch'] = torch.tensor(util.jday(year,mon,day,hr,minute,sec)[0]);
-    data['_jdsatepochF'] = torch.tensor(util.jday(year,mon,day,hr,minute,sec)[1]);
+    data['_epochyr'] = jnp.array(year)
+    data['_jdsatepoch'] = jnp.array(util.jday(year,mon,day,hr,minute,sec)[0]);
+    data['_jdsatepochF'] = jnp.array(util.jday(year,mon,day,hr,minute,sec)[1]);
 
     #I also add the semi-major axis:
     data['semi_major_axis'] = (MU_EARTH/(data['mean_motion']**2))**(1.0/3.0)
@@ -234,9 +234,9 @@ def load_from_data(data, opsmode='i'):
     data['epoch_days'] = epochdays
     data['date_string'] = date_string
     #for SGP4:
-    data['_bstar'] = torch.tensor(float(line1[53]+'.'+line1[54:59])*pow(10, int(line1[59:61])))
-    data['_ndot'] = torch.tensor(float(line1[33:43])/(xpdotp*1440.0))
-    data['_nddot']= torch.tensor(float(line1[44] + '.' + line1[45:50])/(xpdotp*1440.0*1440))
+    data['_bstar'] = jnp.array(float(line1[53]+'.'+line1[54:59])*pow(10, int(line1[59:61])))
+    data['_ndot'] = jnp.array(float(line1[33:43])/(xpdotp*1440.0))
+    data['_nddot']= jnp.array(float(line1[44] + '.' + line1[45:50])/(xpdotp*1440.0*1440))
 
     line2 = ['2 ']
     line2.append(str(data['satellite_catalog_number']).zfill(5)[:5] + ' ')
@@ -250,12 +250,12 @@ def load_from_data(data, opsmode='i'):
     line2 = ''.join(line2)
     line2 += str(compute_checksum(line2))
     #for SGP4:
-    data['_inclo']=torch.tensor(np.deg2rad(float(line2[8:16])))
-    data['_nodeo']=torch.tensor(np.deg2rad(float(line2[17:25])))
-    data['_ecco'] =torch.tensor(float('0.'+line2[26:33].replace(' ', '0')))
-    data['_argpo']=torch.tensor(np.deg2rad(float(line2[34:42])))
-    data['_mo']=torch.tensor(np.deg2rad(float(line2[43:51])))
-    data['_no_kozai'] =torch.tensor(float(line2[52:63]) / xpdotp);
+    data['_inclo']=jnp.array(np.deg2rad(float(line2[8:16])))
+    data['_nodeo']=jnp.array(np.deg2rad(float(line2[17:25])))
+    data['_ecco'] =jnp.array(float('0.'+line2[26:33].replace(' ', '0')))
+    data['_argpo']=jnp.array(np.deg2rad(float(line2[34:42])))
+    data['_mo']=jnp.array(np.deg2rad(float(line2[43:51])))
+    data['_no_kozai'] =jnp.array(float(line2[52:63]) / xpdotp);
 
     if len(line1) != 69:
         raise RuntimeError('TLE line 1 has unexpected length ({})'.format(len(line1)))
@@ -273,9 +273,9 @@ def load_from_data(data, opsmode='i'):
     lines = [line1, line2]
     mon,day,hr,minute,sec = util.days2mdhms(year, epochdays);
     sec_whole, sec_fraction = divmod(sec, 1.0)
-    data['_epochyr'] = torch.tensor(year)
-    data['_jdsatepoch'] = torch.tensor(util.jday(year,mon,day,hr,minute,sec)[0]);
-    data['_jdsatepochF'] = torch.tensor(util.jday(year,mon,day,hr,minute,sec)[1]);
+    data['_epochyr'] = jnp.array(year)
+    data['_jdsatepoch'] = jnp.array(util.jday(year,mon,day,hr,minute,sec)[0]);
+    data['_jdsatepochF'] = jnp.array(util.jday(year,mon,day,hr,minute,sec)[1]);
 
     #I also add the semi-major axis:
     data['semi_major_axis'] = (MU_EARTH/(data['mean_motion']**2))**(1.0/3.0)
@@ -356,7 +356,7 @@ class TLE():
         Returns:
             `dsgp4.tle.TLE` object
         """
-        d = {k: (v.clone() if isinstance(v, torch.Tensor) else copy.deepcopy(v)) for k, v in self._data.items()}
+        d = {k: (jnp.array(v) if isinstance(v, jnp.ndarray) else copy.deepcopy(v)) for k, v in self._data.items()}
         return TLE(d)
 
     def set_time(self, date_mjd):
@@ -373,9 +373,9 @@ class TLE():
         d['epoch_days'] = util.from_mjd_to_epoch_days_after_1_jan(date_mjd)
         mon,day,hr,minute,sec = util.days2mdhms(d['epoch_year'], d['epoch_days']);
         sec_whole, sec_fraction = divmod(sec, 1.0)
-        d['_epochyr'] = torch.tensor(d['epoch_year'])
-        d['_jdsatepoch'] = torch.tensor(util.jday(d['epoch_year'],mon,day,hr,minute,sec)[0]);
-        d['_jdsatepochF'] = torch.tensor(util.jday(d['epoch_year'],mon,day,hr,minute,sec)[1]);
+        d['_epochyr'] = jnp.array(d['epoch_year'])
+        d['_jdsatepoch'] = jnp.array(util.jday(d['epoch_year'],mon,day,hr,minute,sec)[0]);
+        d['_jdsatepochF'] = jnp.array(util.jday(d['epoch_year'],mon,day,hr,minute,sec)[1]);
         tle = TLE(d)
         self._data = tle._data
         self._lines = tle._lines

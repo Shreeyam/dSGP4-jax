@@ -1,5 +1,5 @@
 import numpy
-import torch
+import jax.numpy as jnp
 from .initl import initl
 from .sgp4 import sgp4
 
@@ -39,18 +39,18 @@ def sgp4init(
     * `5` -> epoch elements are sub-orbital
     * `6` -> satellite has decayed
     """
-    temp4    =   torch.tensor(1.5e-12)
+    temp4    =   jnp.array(1.5e-12)
 
     #  ----------- set all near earth variables to zero ------------
-    satellite._isimp   = torch.tensor(0);   satellite._method = 'n';               satellite._aycof    = torch.tensor(0.0);
-    satellite._con41   = torch.tensor(0.0); satellite._cc1    = torch.tensor(0.0); satellite._cc4      = torch.tensor(0.0);
-    satellite._cc5     = torch.tensor(0.0); satellite._d2     = torch.tensor(0.0); satellite._d3       = torch.tensor(0.0);
-    satellite._d4      = torch.tensor(0.0); satellite._delmo  = torch.tensor(0.0); satellite._eta      = torch.tensor(0.0);
-    satellite._argpdot = torch.tensor(0.0); satellite._omgcof = torch.tensor(0.0); satellite._sinmao   = torch.tensor(0.0);
-    satellite._t       = torch.tensor(0.0); satellite._t2cof  = torch.tensor(0.0); satellite._t3cof    = torch.tensor(0.0);
-    satellite._t4cof   = torch.tensor(0.0); satellite._t5cof  = torch.tensor(0.0); satellite._x1mth2   = torch.tensor(0.0);
-    satellite._x7thm1  = torch.tensor(0.0); satellite._mdot   = torch.tensor(0.0); satellite._nodedot  = torch.tensor(0.0);
-    satellite._xlcof   = torch.tensor(0.0); satellite._xmcof  = torch.tensor(0.0); satellite._nodecf   = torch.tensor(0.0);
+    satellite._isimp   = jnp.array(0);   satellite._method = 'n';               satellite._aycof    = jnp.array(0.0);
+    satellite._con41   = jnp.array(0.0); satellite._cc1    = jnp.array(0.0); satellite._cc4      = jnp.array(0.0);
+    satellite._cc5     = jnp.array(0.0); satellite._d2     = jnp.array(0.0); satellite._d3       = jnp.array(0.0);
+    satellite._d4      = jnp.array(0.0); satellite._delmo  = jnp.array(0.0); satellite._eta      = jnp.array(0.0);
+    satellite._argpdot = jnp.array(0.0); satellite._omgcof = jnp.array(0.0); satellite._sinmao   = jnp.array(0.0);
+    satellite._t       = jnp.array(0.0); satellite._t2cof  = jnp.array(0.0); satellite._t3cof    = jnp.array(0.0);
+    satellite._t4cof   = jnp.array(0.0); satellite._t5cof  = jnp.array(0.0); satellite._x1mth2   = jnp.array(0.0);
+    satellite._x7thm1  = jnp.array(0.0); satellite._mdot   = jnp.array(0.0); satellite._nodedot  = jnp.array(0.0);
+    satellite._xlcof   = jnp.array(0.0); satellite._xmcof  = jnp.array(0.0); satellite._nodecf   = jnp.array(0.0);
 
     #  ------------------------ earth constants -----------------------
     #  sgp4fix identify constants and allow alternate values
@@ -60,29 +60,29 @@ def sgp4init(
 
     # -------------------------------------------------------------------------
 
-    satellite._error = torch.tensor(0)
+    satellite._error = jnp.array(0)
     satellite._operationmode = opsmode
     satellite._satnum = satn
 
-    satellite._bstar   = xbstar.clone()
+    satellite._bstar   = jnp.array(xbstar)
     # sgp4fix allow additional parameters in the struct
-    satellite._ndot    = xndot.clone()
-    satellite._nddot   = xnddot.clone()
-    satellite._ecco    = xecco.clone()
-    satellite._argpo   = xargpo.clone()
-    satellite._inclo   = xinclo.clone()
-    satellite._mo	    = xmo.clone()
+    satellite._ndot    = jnp.array(xndot)
+    satellite._nddot   = jnp.array(xnddot)
+    satellite._ecco    = jnp.array(xecco)
+    satellite._argpo   = jnp.array(xargpo)
+    satellite._inclo   = jnp.array(xinclo)
+    satellite._mo	    = jnp.array(xmo)
     # sgp4fix rename variables to clarify which mean motion is intended
-    satellite._no_kozai= xno_kozai.clone()
-    satellite._nodeo   = xnodeo.clone()
+    satellite._no_kozai= jnp.array(xno_kozai)
+    satellite._nodeo   = jnp.array(xnodeo)
 
     # single averaged mean elements
-    satellite._am = torch.tensor(0.0)
-    satellite._em = torch.tensor(0.0)
-    satellite._im = torch.tensor(0.0)
-    satellite._Om = torch.tensor(0.0)
-    satellite._mm = torch.tensor(0.0)
-    satellite._nm = torch.tensor(0.0)
+    satellite._am = jnp.array(0.0)
+    satellite._em = jnp.array(0.0)
+    satellite._im = jnp.array(0.0)
+    satellite._Om = jnp.array(0.0)
+    satellite._mm = jnp.array(0.0)
+    satellite._nm = jnp.array(0.0)
 
     ss     = 78.0 / satellite._radiusearthkm + 1.0
 
@@ -104,7 +104,7 @@ def sgp4init(
         satellite._xke, satellite._j2, satellite._ecco, epoch, satellite._inclo, satellite._no_kozai,
         satellite._operationmode, satellite._method
         )
-    satellite._a    = torch.pow( satellite._no_unkozai*satellite._tumin , (-2.0/3.0) )
+    satellite._a    = jnp.power( satellite._no_unkozai*satellite._tumin , (-2.0/3.0) )
     satellite._alta = satellite._a*(1.0 + satellite._ecco) - 1.0
     satellite._altp = satellite._a*(1.0 - satellite._ecco) - 1.0
 
@@ -131,9 +131,9 @@ def sgp4init(
         satellite._eta  = ao * satellite._ecco * tsi
         etasq = satellite._eta * satellite._eta
         eeta  = satellite._ecco * satellite._eta
-        psisq = torch.abs(1.0 - etasq)
-        coef  = qzms24 * torch.pow(tsi, 4.0)
-        coef1 = coef / torch.pow(psisq, 3.5)
+        psisq = jnp.abs(1.0 - etasq)
+        coef  = qzms24 * jnp.power(tsi, 4.0)
+        coef1 = coef / jnp.power(psisq, 3.5)
         cc2   = coef1 * satellite._no_unkozai * (ao * (1.0 + 1.5 * etasq + eeta *
                     (4.0 + etasq)) + 0.375 * satellite._j2 * tsi / psisq * satellite._con41 *
                     (8.0 + 3.0 * etasq * (8.0 + etasq)))
@@ -147,7 +147,7 @@ def sgp4init(
                         (0.5 + 2.0 * etasq) - satellite._j2 * tsi / (ao * psisq) *
                         (-3.0 * satellite._con41 * (1.0 - 2.0 * eeta + etasq *
                         (1.5 - 0.5 * eeta)) + 0.75 * satellite._x1mth2 *
-                        (2.0 * etasq - eeta * (1.0 + etasq)) * (2.0 * satellite._argpo).cos()))
+                        (2.0 * etasq - eeta * (1.0 + etasq)) * jnp.cos(2.0 * satellite._argpo)))
         satellite._cc5 = 2.0 * coef1 * ao * omeosq * (1.0 + 2.75 *
                     (etasq + eeta) + eeta * etasq)
         cosio4 = cosio2 * cosio2
@@ -163,19 +163,19 @@ def sgp4init(
         satellite._nodedot = xhdot1 + (0.5 * temp2 * (4.0 - 19.0 * cosio2) +
                             2.0 * temp3 * (3.0 - 7.0 * cosio2)) * cosio
         xpidot            =  satellite._argpdot+ satellite._nodedot
-        satellite._omgcof   = satellite._bstar * cc3 * satellite._argpo.cos()
+        satellite._omgcof   = satellite._bstar * cc3 * jnp.cos(satellite._argpo)
         if satellite._ecco > 1.0e-4:
             satellite._xmcof = -x2o3 * coef * satellite._bstar / eeta
         satellite._nodecf = 3.5 * omeosq * xhdot1 * satellite._cc1
         satellite._t2cof   = 1.5 * satellite._cc1
-        if torch.abs(cosio+1.0) > 1.5e-12:
+        if jnp.abs(cosio+1.0) > 1.5e-12:
             satellite._xlcof = -0.25 * satellite._j3oj2 * sinio * (3.0 + 5.0 * cosio) / (1.0 + cosio)
         else:
             satellite._xlcof = -0.25 * satellite._j3oj2 * sinio * (3.0 + 5.0 * cosio) / temp4
         satellite._aycof   = -0.5 * satellite._j3oj2 * sinio
-        delmotemp = 1.0 + satellite._eta * satellite._mo.cos()
+        delmotemp = 1.0 + satellite._eta * jnp.cos(satellite._mo)
         satellite._delmo   = delmotemp * delmotemp * delmotemp
-        satellite._sinmao  = satellite._mo.sin()
+        satellite._sinmao  = jnp.sin(satellite._mo)
         satellite._x7thm1  = 7.0 * cosio2 - 1.0
 
         #  --------------- deep space initialization -------------
@@ -198,6 +198,6 @@ def sgp4init(
                             12.0 * satellite._cc1 * satellite._d3 +
                             6.0 * satellite._d2 * satellite._d2 +
                             15.0 * cc1sq * (2.0 * satellite._d2 + cc1sq))
-    sgp4(satellite, torch.zeros(1,1));
+    sgp4(satellite, jnp.zeros((1,1)));
 
     satellite._init = 'n'

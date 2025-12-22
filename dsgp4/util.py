@@ -1,6 +1,6 @@
 import datetime
 import numpy as np
-import torch
+import jax.numpy as jnp
 
 def get_gravity_constants(gravity_constant_name):
     if gravity_constant_name == 'wgs-72old':
@@ -33,7 +33,7 @@ def get_gravity_constants(gravity_constant_name):
     else:
        raise RuntimeError("Supported gravity constant names: wgs-72, wgs-84, wgs-72old while "+gravity_constant_name+" was provided")
 
-    return torch.tensor(tumin), torch.tensor(mu), torch.tensor(radiusearthkm), torch.tensor(xke), torch.tensor(j2), torch.tensor(j3), torch.tensor(j4), torch.tensor(j3oj2)
+    return jnp.array(tumin), jnp.array(mu), jnp.array(radiusearthkm), jnp.array(xke), jnp.array(j2), jnp.array(j3), jnp.array(j4), jnp.array(j3oj2)
 
 def propagate_batch(tles, tsinces, initialized=True):
     """
@@ -102,9 +102,9 @@ def initialize_tle(tles,
     whichconst=get_gravity_constants(gravity_constant_name)
     deep_space_counter=0
     if isinstance(tles,list):
-        tle_elements=[]#torch.zeros((len(tles),9),requires_grad=with_grad)
+        tle_elements=[]#jnp.zeros((len(tles),9))
         for tle in tles:
-                x=torch.tensor([tle._bstar,
+                x=jnp.array([tle._bstar,
                             tle._ndot,
                             tle._nddot,
                             tle._ecco,
@@ -113,9 +113,9 @@ def initialize_tle(tles,
                             tle._mo,
                             tle._no_kozai,
                             tle._nodeo
-                            ],requires_grad=with_grad)
+                            ])
                 tle_elements.append(x)
-        xx=torch.stack(tle_elements)
+        xx=jnp.stack(tle_elements)
         try:
             tles_batch=tles[0].copy()
             sgp4init_batch(whichconst=whichconst,
@@ -146,7 +146,7 @@ contribute to implement it, open a PR or raise an issue at: https://github.com/e
         return tle_elements, tles_batch
 
     else:
-        tle_elements=torch.tensor([tles._bstar,
+        tle_elements=jnp.array([tles._bstar,
                                     tles._ndot,
                                     tles._nddot,
                                     tles._ecco,
@@ -155,7 +155,7 @@ contribute to implement it, open a PR or raise an issue at: https://github.com/e
                                     tles._mo,
                                     tles._no_kozai,
                                     tles._nodeo
-                                    ],requires_grad=with_grad)
+                                    ])
         sgp4init(whichconst=whichconst,
                             opsmode='i',
                             satn=tles.satellite_catalog_number,
@@ -205,22 +205,22 @@ def gstime(jdut1):
     temp = (temp*(np.pi/180.0) / 240.0) % (2*np.pi) # 360/86400 = 1/240, to deg, to rad
 
      #  ------------------------ check quadrants ---------------------
-    temp=torch.where(temp<0., temp+(2*np.pi), temp)
+    temp=jnp.where(temp<0., temp+(2*np.pi), temp)
     return temp
 
 def clone_w_grad(y):
     """
-    This function takes a tensor and returns a copy of it with gradients.
-    
+    This function takes a JAX array and returns a copy of it.
+
     Parameters:
     ----------------
-    y (``torch.tensor``): tensor to clone
+    y (``jax.Array``): array to clone
 
     Returns:
     ----------------
-    ``torch.tensor``: tensor with gradients
+    ``jax.Array``: cloned array
     """
-    return y.clone().detach().requires_grad_(True)
+    return jnp.array(y)
 
 def jday(year, mon, day, hr, minute, sec):
     """

@@ -1,7 +1,7 @@
 __version__ = '1.1.5'
 
-import torch
-torch.set_default_dtype(torch.float64)
+import jax
+jax.config.update("jax_enable_x64", True)
 from .sgp4 import sgp4
 from .mldsgp4 import mldsgp4
 from .initl import initl

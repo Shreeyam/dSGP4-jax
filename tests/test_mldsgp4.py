@@ -1,7 +1,6 @@
 import dsgp4
 import numpy as np
 import random
-import torch
 import unittest
 
 error_string="Error: deep space propagation not supported (yet). The provided satellite has \
@@ -29,16 +28,15 @@ class UtilTestCase(unittest.TestCase):
                                normalization_R=6958.137, 
                                normalization_V=7.947155867983262)
         #random times:
-        tsinces=torch.rand(len(tles),)*10000
+        tsinces=np.random.rand(len(tles),)*10000
         for tle in tles:
             #we first propagate with the ML-dSGP4:
             try:
-                #we use torch.no_grad() to avoid keeping track of the derivatives:
-                with torch.no_grad():    
-                    states_mldsgp4_out=ml_dsgp4(tle,tsinces)
+                states_mldsgp4_out=ml_dsgp4(tle,tsinces)
                 #let's unnormalize the output:
-                states_mldsgp4_out[:,:3]*=ml_dsgp4.normalization_R
-                states_mldsgp4_out[:,3:]*=ml_dsgp4.normalization_V
+                states_mldsgp4_out_unnorm = np.array(states_mldsgp4_out).copy()
+                states_mldsgp4_out_unnorm[:,:3]*=ml_dsgp4.normalization_R
+                states_mldsgp4_out_unnorm[:,3:]*=ml_dsgp4.normalization_V
             except Exception as e:
                 self.assertTrue((str(e).split()==error_string.split()))
             #now with the SGP4:
@@ -47,7 +45,7 @@ class UtilTestCase(unittest.TestCase):
             except Exception as e:
                 self.assertTrue((str(e).split()==error_string.split()))
             #testing the results:
-            self.assertTrue(np.allclose(states_mldsgp4_out.detach().numpy().reshape(-1,2,3),states_dsgp4_out.detach().numpy(),atol=1e-13))
+            self.assertTrue(np.allclose(np.array(states_mldsgp4_out_unnorm).reshape(-1,2,3),np.array(states_dsgp4_out),atol=1e-13))
 
     def test_mldsgp4_batch_tles(self):
         lines=file.splitlines()
@@ -72,17 +70,17 @@ class UtilTestCase(unittest.TestCase):
         tles_=[]
         for tle in tles:
             tles_+=[tle]*100
-        tsinces = torch.cat([torch.linspace(0,24*60,100)]*len(tles))
+        tsinces = np.concatenate([np.linspace(0,24*60,100)]*len(tles))
 
-        #we first propagate with the ML-dSGP4 and we use torch.no_grad() to avoid keeping track of the derivatives:
-        with torch.no_grad():    
-            states_mldsgp4_out=ml_dsgp4(tles_,tsinces)
+        #we first propagate with the ML-dSGP4:
+        states_mldsgp4_out=ml_dsgp4(tles_,tsinces)
         #let's unnormalize the output:
-        states_mldsgp4_out[:,:3]*=ml_dsgp4.normalization_R
-        states_mldsgp4_out[:,3:]*=ml_dsgp4.normalization_V
+        states_mldsgp4_out_unnorm = np.array(states_mldsgp4_out).copy()
+        states_mldsgp4_out_unnorm[:,:3]*=ml_dsgp4.normalization_R
+        states_mldsgp4_out_unnorm[:,3:]*=ml_dsgp4.normalization_V
         states_dsgp4_out=dsgp4.propagate_batch(tles_, tsinces, initialized=False)
         #testing the results:
-        self.assertTrue(np.allclose(states_mldsgp4_out.detach().numpy().reshape(-1,2,3),states_dsgp4_out.detach().numpy(),atol=1e-12))
+        self.assertTrue(np.allclose(np.array(states_mldsgp4_out_unnorm).reshape(-1,2,3),np.array(states_dsgp4_out),atol=1e-12))
 
 
 file="""

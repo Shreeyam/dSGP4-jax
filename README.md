@@ -1,10 +1,8 @@
-# $\partial\textrm{SGP4}$
-[![build](https://github.com/esa/dSGP4/actions/workflows/build.yml/badge.svg)](https://github.com/esa/dSGP4/actions/workflows/build.yml)
-[![codecov](https://codecov.io/gh/esa/dSGP4/graph/badge.svg?token=K3py7YT8UR)](https://codecov.io/gh/esa/dSGP4)
-[![Anaconda-Server Badge](https://anaconda.org/conda-forge/dsgp4/badges/latest_release_relative_date.svg)](https://anaconda.org/conda-forge/dsgp4)
-[![Anaconda-Server Badge](https://anaconda.org/conda-forge/dsgp4/badges/downloads.svg)](https://anaconda.org/conda-forge/dsgp4)
+# $\partial\textrm{SGP4}$ - JAX
 
-Differentiable SGP4.
+> **Note**: This is a JAX port of the original PyTorch implementation. For the original PyTorch version, see [esa/dSGP4](https://github.com/esa/dSGP4).
+
+Differentiable SGP4 implemented in JAX.
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
@@ -27,12 +25,20 @@ Differentiable SGP4.
 
 ![orbits](https://github.com/esa/dSGP4/assets/33602846/2f42992d-0838-4c11-ae4b-68ad76e2bf33)
 
-This repository contains the code discussed in [this paper](https://doi.org/10.1016/j.actaastro.2024.10.063). 
+This repository contains a JAX port of the code discussed in [the original paper](https://doi.org/10.1016/j.actaastro.2024.10.063).
 
-$\partial \textrm{SGP4}$ is a differentiable version of SGP4 implemented using PyTorch. By making SGP4 differentiable, $\partial \textrm{SGP4}$ facilitates various space-related applications, including spacecraft orbit determination, covariance transformation, state transition matrix computation, and covariance propagation. 
-Additionally, $\partial \textrm{SGP4}$'s PyTorch implementation allows for parallel orbital propagation across batches of Two-Line Element Sets (TLEs), leveraging the computational power of CPUs, GPUs, and advanced hardware for distributed prediction of satellite positions at future times. Furthermore, $\partial \textrm{SGP4}$'s differentiability enables integration with modern machine learning techniques. 
-Thus, we propose a novel orbital propagation paradigm, $\textrm{ML}-\partial \textrm{SGP4}$, where neural networks are integrated into the orbital propagator. 
-Through stochastic gradient descent, this combined model's inputs, outputs, and parameters can be iteratively refined, surpassing SGP4's precision while maintaining computational speed. This empowers satellite operators and researchers to train the model using high-precision simulated or observed data, advancing orbital prediction capabilities compared to the standard SGP4.
+$\partial \textrm{SGP4}$ is a differentiable version of SGP4 implemented using JAX. By making SGP4 differentiable, $\partial \textrm{SGP4}$ facilitates various space-related applications, including spacecraft orbit determination, covariance transformation, state transition matrix computation, and covariance propagation.
+
+The JAX implementation provides several key advantages:
+* **High-performance automatic differentiation** using JAX's grad API
+* **JIT compilation** for optimal performance on CPUs, GPUs, and TPUs
+* **Parallel orbital propagation** across batches of Two-Line Element Sets (TLEs)
+* **Vectorized operations** leveraging modern hardware accelerators
+* **Functional programming paradigm** for cleaner, more composable code
+
+Furthermore, $\partial \textrm{SGP4}$'s differentiability enables integration with modern machine learning techniques.
+Thus, we propose a novel orbital propagation paradigm, $\textrm{ML}-\partial \textrm{SGP4}$, where neural networks are integrated into the orbital propagator.
+Through gradient-based optimization, this combined model's inputs, outputs, and parameters can be iteratively refined, surpassing SGP4's precision while maintaining computational speed. This empowers satellite operators and researchers to train the model using high-precision simulated or observed data, advancing orbital prediction capabilities compared to the standard SGP4.
 
 ## Goals
 

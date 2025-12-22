@@ -2,7 +2,6 @@ import datetime
 import dsgp4
 import numpy as np
 import random
-import torch
 import unittest
 
 class UtilTestCase(unittest.TestCase):
@@ -35,9 +34,9 @@ class UtilTestCase(unittest.TestCase):
         #actually satisfies the tolerance
         tsince_2=1000.
         new_tol=1e-13
-        target_state=dsgp4.sgp4(my_tle,tsince_2*torch.ones(1,1,requires_grad=True))
+        target_state=dsgp4.sgp4(my_tle,tsince_2*np.ones((1,1)))
         time_mjd_0=dsgp4.util.from_datetime_to_mjd(my_tle._epoch)
         time_mjd=time_mjd_0+tsince_2/24/60
         found_tle_2,_=dsgp4.newton_method(tle0=my_tle, time_mjd=time_mjd, new_tol=new_tol, target_state=target_state,gravity_constant_name=gravity_constant_name)
-        found_state=dsgp4.sgp4(found_tle_2,torch.tensor((time_mjd-dsgp4.util.from_datetime_to_mjd(found_tle_2._epoch))*1440.))#(dsgp4.util.from_datetime_to_mjd(found_tle_2._epoch)-dsgp4.util.from_datetime_to_mjd(new_date))*1440.*torch.ones(1,1,requires_grad=True))
-        self.assertTrue(torch.norm(found_state-target_state)<new_tol)
+        found_state=dsgp4.sgp4(found_tle_2,np.array((time_mjd-dsgp4.util.from_datetime_to_mjd(found_tle_2._epoch))*1440.))
+        self.assertTrue(np.linalg.norm(np.array(found_state)-np.array(target_state))<new_tol)

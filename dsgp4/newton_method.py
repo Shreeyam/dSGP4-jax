@@ -1,5 +1,6 @@
 import numpy as np
-import torch
+import jax
+import jax.numpy as jnp
 from .sgp4 import sgp4
 from .sgp4init import sgp4init
 from . import util
@@ -65,7 +66,7 @@ def initial_guess_tle(time_mjd, tle_object, gravity_constant_name="wgs-84"):
     #then we need to propagate the state, and extract the keplerian elements:
     util.initialize_tle(tle_object,gravity_constant_name=gravity_constant_name)
     tsince=(time_mjd-util.from_datetime_to_mjd(tle_object._epoch))*1440.
-    target_state=util.propagate(tle_object, tsince).detach().numpy()*1e3
+    target_state=np.array(util.propagate(tle_object, tsince))*1e3
     _,mu_earth,_,_,_,_,_,_=util.get_gravity_constants(gravity_constant_name)
     mu_earth=float(mu_earth)*1e9
     kepl_el=util.from_cartesian_to_keplerian(target_state[0],target_state[1],mu_earth)
@@ -106,7 +107,7 @@ def _propagate(x, tle_sat, tsince, gravity_constant_name="wgs-84"):
                         xno_kozai=x[4],
                         xnodeo=x[5],
                         satellite=tle_sat)
-    state=sgp4(tle_sat, tsince*torch.ones(1,1))
+    state=sgp4(tle_sat, tsince*jnp.ones((1,1)))
     return state
 
 def newton_method(tle0, time_mjd, max_iter=50, new_tol=1e-12, verbose=False, target_state=None, gravity_constant_name="wgs-84"):
@@ -135,43 +136,46 @@ def newton_method(tle0, time_mjd, max_iter=50, new_tol=1e-12, verbose=False, tar
 
     i,tol=0,1e9
     next_tle=initial_guess_tle(time_mjd, tle0,gravity_constant_name=gravity_constant_name)
-    y0 = torch.tensor([
+    y0 = jnp.array([
                         next_tle._ecco,
                         next_tle._argpo,
                         next_tle._inclo,
                         next_tle._mo,
                         next_tle._no_kozai,
                         next_tle._nodeo,
-                    ], requires_grad=True)
+                    ])
     def propagate_fn(x):
         tsince=(time_mjd-util.from_datetime_to_mjd(next_tle._epoch))*1440.
-        return _propagate(x,next_tle,tsince,gravity_constant_name=gravity_constant_name)
+        return _propagate(x,next_tle,tsince,gravity_constant_name=gravity_constant_name).flatten()
+
+    # Compute jacobian using JAX
+    jacobian_fn = jax.jacobian(propagate_fn)
+
     while i<max_iter and tol>new_tol:
-        grads=[]
-        F=[]
-        for idx, (row,col) in enumerate([(0,0), (0,1), (0,2), (1,0), (1,1), (1,2)]):
-            y=util.clone_w_grad(y0)
-            val=propagate_fn(y)[row][col]
-            val.backward()
-            grads.append(y.grad)
-            F.append((val-target_state[row][col]).item())
-        tol=np.linalg.norm(F)
+        # Compute state and residual
+        current_state = propagate_fn(y0).reshape(2, 3)
+        F = (current_state - np.array(target_state)).flatten()
+        tol = np.linalg.norm(F)
+
         if tol<new_tol:
             if verbose:
                 print(f'Solution F(y) = {tol}, converged in {i} iterations')
             return next_tle, y0
-        DF=np.stack(grads)
-        #dY=-np.linalg.pinv(DF.T@DF)@DF.T@F
-        dY=np.linalg.solve(DF, -np.array(F))
-        dY=dY#/np.linalg.norm(dY)
-        #avoid negative eccentricity:
+
+        # Compute Jacobian
+        DF = np.array(jacobian_fn(y0))
+
+        # Solve for update
+        dY = np.linalg.solve(DF, -F)
+
+        # Avoid negative or >1 eccentricity
         if y0[0]+dY[0]<0:
-            dY[0]=1e-10
+            dY[0] = 1e-10 - float(y0[0])
         if y0[0]+dY[0]>1.:
-            dY[0]=1-1e-10
-        dY=torch.tensor(dY, requires_grad=True)
-        #update the state:
-        y0 = torch.tensor([float(a) + float(b) for a, b in zip(y0, dY)], requires_grad=True)
+            dY[0] = 1-1e-10 - float(y0[0])
+
+        # Update the state
+        y0 = jnp.array([float(a) + float(b) for a, b in zip(y0, dY)])
         next_tle = update_TLE(next_tle, y0)
         i+=1
     if verbose:

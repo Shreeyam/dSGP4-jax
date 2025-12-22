@@ -1,5 +1,5 @@
 import dsgp4
-import torch
+import jax.numpy as jnp
 import sgp4
 import sgp4.earth_gravity
 import unittest
@@ -48,7 +48,7 @@ class UtilTestCase(unittest.TestCase):
         tle=dsgp4.TLE(lines)
         dsgp4.initialize_tle(tle)
         # Extract the state vector from the dSGP4 output
-        st=dsgp4.sgp4(tle,torch.tensor(0.0)).detach().numpy()*1e3  # Convert to meters and meters/second
+        st=np.array(dsgp4.sgp4(tle,jnp.array(0.0)))*1e3  # Convert to meters and meters/second
         r_vec = st[0]  # Position vector in meters
         v_vec = st[1]  # Velocity vector in m/s
         # code to generate the poliastro outputs:

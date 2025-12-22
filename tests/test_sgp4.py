@@ -4,7 +4,6 @@ import random
 import sgp4
 import sgp4.io
 import sgp4.earth_gravity
-import torch
 import unittest
 
 error_string="Error: deep space propagation not supported (yet). The provided satellite has \
@@ -44,7 +43,7 @@ class UtilTestCase(unittest.TestCase):
                 for _ in range(50):
                     tsince=random.uniform(-100.,100.)
                     satrec_state=sgp4.propagation.sgp4(satrec, tsince)
-                    tle_sat_state=dsgp4.sgp4(tle_sat, tsince*torch.ones(1,1))
+                    tle_sat_state=dsgp4.sgp4(tle_sat, tsince*np.ones((1,1)))
                     self.assertAlmostEqual(satrec_state[0][0], float(tle_sat_state[0][0]))
                     self.assertAlmostEqual(satrec_state[0][1], float(tle_sat_state[0][1]))
                     self.assertAlmostEqual(satrec_state[0][2], float(tle_sat_state[0][2]))
@@ -78,9 +77,9 @@ class UtilTestCase(unittest.TestCase):
 
         for tle in tles_filtered:
             satrec=sgp4.io.twoline2rv(tle.line1,tle.line2, whichconst=sgp4.earth_gravity.wgs84)
-            tsinces=torch.rand(100,)*10
-            satrec_states=np.stack([np.array(sgp4.propagation.sgp4(satrec, t)) for t in tsinces.detach().numpy()])
-            self.assertTrue(np.allclose(dsgp4.sgp4(tle,tsinces).detach().numpy(),satrec_states))
+            tsinces=np.random.rand(100)*10
+            satrec_states=np.stack([np.array(sgp4.propagation.sgp4(satrec, t)) for t in tsinces])
+            self.assertTrue(np.allclose(np.array(dsgp4.sgp4(tle,tsinces)),satrec_states))
         
     def test_spacetrack(self):
         #here we compare the output with the output of the spacetrack API (attached at the end of this file), for 78 different TLEs, propagated at 5 different times each
@@ -114,10 +113,10 @@ class UtilTestCase(unittest.TestCase):
             dsgp4.initialize_tle(tles[-1], gravity_constant_name="wgs-72");
 
         #we are now ready to collect the results of the dSGP4 propagation for the same tsince values
-        tsinces=torch.tensor([0.,360.,720.,1080.,1440.])
+        tsinces=np.array([0.,360.,720.,1080.,1440.])
         results_dsgp4=[]
         for tle in tles:
-            results_dsgp4.append(dsgp4.propagate(tle, tsinces).numpy().reshape(5,6))    
+            results_dsgp4.append(np.array(dsgp4.propagate(tle, tsinces)).reshape(5,6))    
         results_dsgp4=np.stack(results_dsgp4) 
         self.assertTrue(np.allclose(results_dsgp4,space_track_results[:,:,1:],atol=1e-6))
 

@@ -4,7 +4,7 @@ import random
 import sgp4
 import sgp4.io
 import sgp4.earth_gravity
-import torch
+import jax.numpy as jnp
 import unittest
 
 error_string="Error: deep space propagation not supported (yet). The provided satellite has \
@@ -32,19 +32,19 @@ class UtilTestCase(unittest.TestCase):
                 #we only check those that have not failed to initialize:
                 if tle._error==0:
                     #batch mode only supports isimp==0
-                    if tle._isimp==0:       
-                        tsinces=torch.rand(100)*10
+                    if tle._isimp==0:
+                        tsinces=np.random.rand(100)*10
                         tles_batch+=[tle]*len(tsinces)
                         tsinces_batch+=[tsinces]
                         out_non_batched+=[dsgp4.propagate(tle,tsinces)]
             except Exception as e:
                     self.assertTrue((str(e).split()==error_string.split()) or ((str(e).split()==error_string_isimp.split())))
-        tsinces_batch=torch.cat(tsinces_batch)
-        out_non_batched=torch.cat(out_non_batched)
+        tsinces_batch=np.concatenate(tsinces_batch)
+        out_non_batched=np.concatenate(out_non_batched)
         #we initialize and then batch propagate all TLEs at all required times:
         _,tle_batch=dsgp4.initialize_tle(tles_batch,gravity_constant_name="wgs-72")
         out_batched=dsgp4.propagate_batch(tle_batch,tsinces_batch)
-        self.assertTrue(np.allclose(out_non_batched.numpy(),out_batched.numpy()))
+        self.assertTrue(np.allclose(np.array(out_non_batched),np.array(out_batched)))
         
     def test_isimp_batched(self):
         lines = file1.splitlines()
@@ -58,21 +58,21 @@ class UtilTestCase(unittest.TestCase):
             data.append(lines[i+1])
             data.append(lines[i+2])
             tle = dsgp4.tle.TLE(data)
-            try: 
+            try:
                 dsgp4.initialize_tle(tle)
                 if tle._error==0:
-                    tsince = torch.rand(100)*10
+                    tsince = np.random.rand(100)*10
                     tles_batch += [tle]*len(tsince)
                     tsinces_batch+=[tsince]
                     out_non_batched+=[dsgp4.propagate(tle,tsince)]
             except Exception as e:
                 self.assertTrue(str(e).split()==error_string.split())
-        tsinces_batch = torch.cat(tsinces_batch)
-        out_non_batched = torch.cat(out_non_batched)
+        tsinces_batch = np.concatenate(tsinces_batch)
+        out_non_batched = np.concatenate(out_non_batched)
         _,tle_batch=dsgp4.initialize_tle(tles_batch)
         out_batched = dsgp4.propagate_batch(tle_batch,tsinces_batch)
-        self.assertTrue(torch.any(torch.tensor([tle._isimp==1 for tle in tles_batch])))
-        self.assertTrue(np.allclose(out_non_batched.numpy(),out_batched.numpy()))
+        self.assertTrue(np.any(np.array([tle._isimp==1 for tle in tles_batch])))
+        self.assertTrue(np.allclose(np.array(out_non_batched),np.array(out_batched)))
 
 
 file1 = """

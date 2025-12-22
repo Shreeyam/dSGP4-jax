@@ -1,5 +1,5 @@
 import numpy
-import torch
+import jax.numpy as jnp
 
 from . import util
 
@@ -10,15 +10,15 @@ def initl(
        method='n',
        ):
 
-     x2o3   = torch.tensor(2.0 / 3.0);
+     x2o3   = jnp.array(2.0 / 3.0);
 
      eccsq  = ecco * ecco;
      omeosq = 1.0 - eccsq;
-     rteosq = omeosq.sqrt();
-     cosio  = inclo.cos();
+     rteosq = jnp.sqrt(omeosq);
+     cosio  = jnp.cos(inclo);
      cosio2 = cosio * cosio;
 
-     ak    = torch.pow(xke / no, x2o3);
+     ak    = jnp.power(xke / no, x2o3);
      d1    = 0.75 * j2 * (3.0 * cosio2 - 1.0) / (rteosq * omeosq);
      del_  = d1 / (ak * ak);
      adel  = ak * (1.0 - del_ * del_ - del_ *
@@ -26,8 +26,8 @@ def initl(
      del_  = d1/(adel * adel);
      no    = no / (1.0 + del_);
 
-     ao    = torch.pow(xke / no, x2o3);
-     sinio = inclo.sin();
+     ao    = jnp.power(xke / no, x2o3);
+     sinio = jnp.sin(inclo);
      po    = ao * omeosq;
      con42 = 1.0 - 5.0 * cosio2;
      con41 = -con42-cosio2-cosio2;
@@ -38,12 +38,12 @@ def initl(
      if opsmode == 'a':
          #  gst time
          ts70  = epoch - 7305.0;
-         ds70 = torch.floor_divide(ts70 + 1.0e-8,1);
+         ds70 = jnp.floor_divide(ts70 + 1.0e-8,1);
          tfrac = ts70 - ds70;
          #  find greenwich location at epoch
-         c1    = torch.tensor(1.72027916940703639e-2);
-         thgr70= torch.tensor(1.7321343856509374);
-         fk5r  = torch.tensor(5.07551419432269442e-15);
+         c1    = jnp.array(1.72027916940703639e-2);
+         thgr70= jnp.array(1.7321343856509374);
+         fk5r  = jnp.array(5.07551419432269442e-15);
          c1p2p = c1 + (2*numpy.pi);
          gsto  = (thgr70 + c1*ds70 + c1p2p*tfrac + ts70*ts70*fk5r) % (2*numpy.pi)
          if gsto < 0.0:

@@ -1,6 +1,5 @@
 import datetime
 import numpy as np
-import torch
 import unittest
 
 import dsgp4.tle
