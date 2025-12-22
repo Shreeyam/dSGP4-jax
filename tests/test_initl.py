@@ -1,4 +1,4 @@
-import dsgp4
+import dsgp4_jax
 import numpy as np
 import sgp4
 import sgp4.io
@@ -20,8 +20,8 @@ class UtilTestCase(unittest.TestCase):
             data.append(lines[i])
             data.append(lines[i+1])
             data.append(lines[i+2])
-            tles.append(dsgp4.tle.TLE(data))
-        whichconst=dsgp4.util.get_gravity_constants("wgs-84")
+            tles.append(dsgp4_jax.tle.TLE(data))
+        whichconst=dsgp4_jax.util.get_gravity_constants("wgs-84")
         tumin, mu, radiusearthkm, xke, j2, j3, j4, j3oj2=whichconst
         satrec_tumin, satrec_mu, satrec_radiusearthkm, satrec_xke, satrec_j2, satrec_j3, satrec_j4, satrec_j3oj2=sgp4.earth_gravity.wgs84
         self.assertAlmostEqual(satrec_tumin,float(tumin))
@@ -52,7 +52,7 @@ class UtilTestCase(unittest.TestCase):
                 tle_sat_ainv,  tle_sat_ao,    tle_sat_con41,  tle_sat_con42, tle_sat_cosio,
                 tle_sat_cosio2, tle_sat_eccsq, tle_sat_omeosq, tle_sat_posq,
                 tle_sat_rp,    tle_sat_rteosq, tle_sat_sinio , tle_sat_gsto,
-                ) = dsgp4.initl(
+                ) = dsgp4_jax.initl(
                    xke, j2, tle_sat._ecco, (tle_sat._jdsatepoch+tle_sat._jdsatepochF)-2433281.5, tle_sat._inclo, tle_sat._no_kozai,
                    'i', 'n'
                  );
@@ -75,12 +75,12 @@ class UtilTestCase(unittest.TestCase):
                 self.assertTrue((str(e).split()==error_string.split()))
 
     def test_coverage(self):
-        tle=dsgp4.tle.TLE(file.splitlines()[1:4])
-        whichconst=dsgp4.util.get_gravity_constants("wgs-84")
+        tle=dsgp4_jax.tle.TLE(file.splitlines()[1:4])
+        whichconst=dsgp4_jax.util.get_gravity_constants("wgs-84")
         tumin, mu, radiusearthkm, xke, j2, j3, j4, j3oj2=whichconst
         satrec_tumin, satrec_mu, satrec_radiusearthkm, satrec_xke, satrec_j2, satrec_j3, satrec_j4, satrec_j3oj2=sgp4.earth_gravity.wgs84
         #I run the opsmode=='a'
-        dsgp4.initl(xke, j2, tle._ecco, (tle._jdsatepoch+tle._jdsatepochF)-2433281.5, tle._inclo, tle._no_kozai, 'a', 'n')
+        dsgp4_jax.initl(xke, j2, tle._ecco, (tle._jdsatepoch+tle._jdsatepochF)-2433281.5, tle._inclo, tle._no_kozai, 'a', 'n')
 
 file="""
 0 COSMOS 2251 DEB

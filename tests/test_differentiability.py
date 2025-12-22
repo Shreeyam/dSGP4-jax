@@ -1,4 +1,4 @@
-import dsgp4
+import dsgp4_jax
 import numpy as np
 import random
 import jax
@@ -22,13 +22,13 @@ class UtilTestCase(unittest.TestCase):
             data.append(lines[i])
             data.append(lines[i+1])
             data.append(lines[i+2])
-            tles.append(dsgp4.tle.TLE(data))
+            tles.append(dsgp4_jax.tle.TLE(data))
 
         # Filter out deep space and error cases
         tles_filtered=[]
         for tle_satellite in tles:
             try:
-                dsgp4.initialize_tle(tle_satellite, gravity_constant_name="wgs-84")
+                dsgp4_jax.initialize_tle(tle_satellite, gravity_constant_name="wgs-84")
                 if tle_satellite._error==0:
                     tles_filtered.append(tle_satellite)
             except Exception as e:
@@ -39,14 +39,14 @@ class UtilTestCase(unittest.TestCase):
 
             # Define function to compute position at time t
             def propagate_at_time(t):
-                state = dsgp4.propagate(tle, t, initialized=True)
+                state = dsgp4_jax.propagate(tle, t, initialized=True)
                 return state[0, :]  # position only
 
             # Compute gradient using JAX
             grad_fn = jax.grad(lambda t: propagate_at_time(t)[0])  # gradient of x position
 
             # Get state and velocity at the time point
-            state_teme = dsgp4.propagate(tle, time_val, initialized=True)
+            state_teme = dsgp4_jax.propagate(tle, time_val, initialized=True)
             velocity = state_teme[1, :]  # velocity from SGP4
 
             # Compute gradients (derivative of position w.r.t. time)
@@ -71,13 +71,13 @@ class UtilTestCase(unittest.TestCase):
             data.append(lines[i])
             data.append(lines[i+1])
             data.append(lines[i+2])
-            tles.append(dsgp4.tle.TLE(data))
+            tles.append(dsgp4_jax.tle.TLE(data))
 
         # Filter out deep space and error cases
         tles_filtered=[]
         for tle_satellite in tles:
             try:
-                dsgp4.initialize_tle(tle_satellite, gravity_constant_name="wgs-84")
+                dsgp4_jax.initialize_tle(tle_satellite, gravity_constant_name="wgs-84")
                 if tle_satellite._error==0:
                     tles_filtered.append(tle_satellite)
             except Exception as e:
@@ -89,9 +89,9 @@ class UtilTestCase(unittest.TestCase):
             # Define propagation function parametrized by orbital elements
             def propagate_with_elements(elements):
                 # elements = [ecco, argpo, inclo, mo, no_kozai, nodeo]
-                whichconst = dsgp4.util.get_gravity_constants("wgs-84")
-                temp_tle = dsgp4.tle.TLE([tle.line1, tle.line2])
-                dsgp4.sgp4init(
+                whichconst = dsgp4_jax.util.get_gravity_constants("wgs-84")
+                temp_tle = dsgp4_jax.tle.TLE([tle.line1, tle.line2])
+                dsgp4_jax.sgp4init(
                     whichconst=whichconst,
                     opsmode='i',
                     satn=tle.satellite_catalog_number,
@@ -107,7 +107,7 @@ class UtilTestCase(unittest.TestCase):
                     xnodeo=elements[5],
                     satellite=temp_tle
                 )
-                state = dsgp4.sgp4(temp_tle, jnp.array(time_val))
+                state = dsgp4_jax.sgp4(temp_tle, jnp.array(time_val))
                 return state[0, 0]  # Return just x position for simplicity
 
             # Compute gradient using JAX

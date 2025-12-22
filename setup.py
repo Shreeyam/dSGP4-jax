@@ -1,7 +1,7 @@
 import os
 import sys
 from setuptools import setup, find_packages
-PACKAGE_NAME = 'dsgp4'
+PACKAGE_NAME = 'dsgp4_jax'
 MINIMUM_PYTHON_VERSION = 3, 8
 
 with open('README.md', 'r') as f:
@@ -26,15 +26,15 @@ def read_package_variable(key):
 
 check_python_version()
 setup(
-    name='dsgp4',
+    name='dsgp4-jax',
     version=read_package_variable('__version__'),
-    description='Differentiable SGP4 prototype',
+    description='Differentiable SGP4 - JAX Implementation',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    author='Acciarini, Baydin, Izzo',
+    author='Acciarini, Baydin, Izzo (JAX port)',
     author_email='giacomo.acciarini@gmail.com',
     packages=find_packages(),
-    url='https://github.com/esa/dSGP4',
+    url='https://github.com/esa/dSGP4-jax',
     install_requires=['numpy', 'jax', 'jaxlib', 'matplotlib'],
     extras_require={'dev': ['pytest', 'coverage', 'pytest-xdist', 'sgp4>=2.21']},
     classifiers=['License :: OSI Approved :: GNU General Public License v3 (GPLv3)', 'Programming Language :: Python :: 3']

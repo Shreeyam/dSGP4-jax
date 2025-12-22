@@ -1,4 +1,4 @@
-import dsgp4
+import dsgp4_jax
 import numpy as np
 import random
 import unittest
@@ -18,11 +18,11 @@ class UtilTestCase(unittest.TestCase):
             data.append(lines[i])
             data.append(lines[i+1])
             data.append(lines[i+2])
-            tles.append(dsgp4.tle.TLE(data))
+            tles.append(dsgp4_jax.tle.TLE(data))
 
         #let's load the ML-dSGP4 model without input/output correction
         #this should correspond to just SGP4
-        ml_dsgp4=dsgp4.mldsgp4(hidden_size=35,
+        ml_dsgp4=dsgp4_jax.mldsgp4(hidden_size=35,
                                input_correction=0.,
                                output_correction=0.,
                                normalization_R=6958.137, 
@@ -41,7 +41,7 @@ class UtilTestCase(unittest.TestCase):
                 self.assertTrue((str(e).split()==error_string.split()))
             #now with the SGP4:
             try:
-                states_dsgp4_out=dsgp4.propagate(tle, tsinces, initialized=False)
+                states_dsgp4_out=dsgp4_jax.propagate(tle, tsinces, initialized=False)
             except Exception as e:
                 self.assertTrue((str(e).split()==error_string.split()))
             #testing the results:
@@ -57,11 +57,11 @@ class UtilTestCase(unittest.TestCase):
             data.append(lines[i])
             data.append(lines[i+1])
             data.append(lines[i+2])
-            tles.append(dsgp4.tle.TLE(data))
+            tles.append(dsgp4_jax.tle.TLE(data))
         tles=tles[:20]
         #let's load the ML-dSGP4 model without input/output correction
         #this should correspond to just SGP4
-        ml_dsgp4=dsgp4.mldsgp4(hidden_size=35,
+        ml_dsgp4=dsgp4_jax.mldsgp4(hidden_size=35,
                                input_correction=0.,
                                output_correction=0.,
                                normalization_R=6958.137, 
@@ -78,7 +78,7 @@ class UtilTestCase(unittest.TestCase):
         states_mldsgp4_out_unnorm = np.array(states_mldsgp4_out).copy()
         states_mldsgp4_out_unnorm[:,:3]*=ml_dsgp4.normalization_R
         states_mldsgp4_out_unnorm[:,3:]*=ml_dsgp4.normalization_V
-        states_dsgp4_out=dsgp4.propagate_batch(tles_, tsinces, initialized=False)
+        states_dsgp4_out=dsgp4_jax.propagate_batch(tles_, tsinces, initialized=False)
         #testing the results:
         self.assertTrue(np.allclose(np.array(states_mldsgp4_out_unnorm).reshape(-1,2,3),np.array(states_dsgp4_out),atol=1e-12))
 

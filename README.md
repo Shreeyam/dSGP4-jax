@@ -42,9 +42,11 @@ Through gradient-based optimization, this combined model's inputs, outputs, and 
 
 ## Goals
 
-* Differentiable version of SGP4 (implemented in PyTorch)
+* Differentiable version of SGP4 (implemented in JAX)
+* High-performance automatic differentiation using JAX's grad API
+* JIT compilation for optimal performance on CPUs, GPUs, and TPUs
 * Hybrid SGP4 and machine learning propagation: input/output/parameters corrections of SGP4 from accurate simulated or observed data are learned
-* Parallel TLE propagation
+* Parallel TLE propagation with vectorized operations
 * Use of differentiable SGP4 on several spaceflight mechanics problems (state transition matrix computation, covariance transformation, and propagation, orbit determination, ML hybrid orbit propagation, etc.)
 
 ## How to cite
@@ -69,27 +71,40 @@ keywords = {SGP4, Orbital propagation, Differentiable programming, Machine learn
 
 ## Installation
 
-Via [pip](https://pypi.org/project/dsgp4/):
-```
-pip install dsgp4
-```
+### Local installation from source:
 
-Via [conda](https://anaconda.org/conda-forge/dsgp4):
-```
-conda install conda-forge::dsgp4
-```
-
-or mamba:
-```
-mamba install dsgp4
-```
-
-Local installation:
-```
-git clone https://github.com/esa/dSGP4.git
-cd dSGP4
+```bash
+git clone https://github.com/esa/dSGP4-jax.git
+cd dSGP4-jax
 pip install -e .
 ```
+
+**Note:** The package name is `dsgp4-jax` but you import it as `dsgp4_jax`:
+```python
+import dsgp4_jax  # Note the underscore
+```
+
+### Requirements
+
+This JAX port requires:
+- `jax` >= 0.4.0
+- `jaxlib` >= 0.4.0
+- `numpy`
+- `matplotlib`
+
+For GPU support, install JAX with CUDA support:
+```bash
+pip install jax[cuda12]
+```
+
+See the [JAX installation guide](https://jax.readthedocs.io/en/latest/installation.html) for more details on GPU/TPU setup.
+
+### Original PyTorch version
+
+For the original PyTorch implementation, see:
+- PyPI: [dsgp4](https://pypi.org/project/dsgp4/)
+- Conda: `conda install conda-forge::dsgp4`
+- GitHub: [esa/dSGP4](https://github.com/esa/dSGP4)
 
 ## Documentation and examples
 

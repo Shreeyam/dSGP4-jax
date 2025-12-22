@@ -34,23 +34,23 @@ def sgp4(satellite, tsince):
     vkmpersec    = jnp.ones(tsince.shape)*(satellite._radiusearthkm * satellite._xke/60.0)
 
     # sgp4 error flag
-    satellite._t    = jnp.array(tsince)
+    t    = jnp.array(tsince)  # Use local variable instead of modifying satellite._t
     satellite._error = jnp.array(0)
 
     #  secular gravity and atmospheric drag
-    xmdf    = satellite._mo + satellite._mdot * satellite._t
-    argpdf  = satellite._argpo + satellite._argpdot * satellite._t
-    nodedf  = satellite._nodeo + satellite._nodedot * satellite._t
+    xmdf    = satellite._mo + satellite._mdot * t
+    argpdf  = satellite._argpo + satellite._argpdot * t
+    nodedf  = satellite._nodeo + satellite._nodedot * t
     argpm   = argpdf
     mm     = xmdf
-    t2     = satellite._t * satellite._t
+    t2     = t * t
     nodem   = nodedf + satellite._nodecf * t2
-    tempa   = 1.0 - satellite._cc1 * satellite._t
-    tempe   = satellite._bstar * satellite._cc4 * satellite._t
+    tempa   = 1.0 - satellite._cc1 * t
+    tempe   = satellite._bstar * satellite._cc4 * t
     templ   = satellite._t2cof * t2
 
     if satellite._isimp != 1:
-        delomg = satellite._omgcof * satellite._t
+        delomg = satellite._omgcof * t
         delmtemp =  1.0 + satellite._eta * jnp.cos(xmdf)
         delm   = satellite._xmcof * \
                   (delmtemp * delmtemp * delmtemp -
@@ -58,14 +58,14 @@ def sgp4(satellite, tsince):
         temp   = delomg + delm
         mm     = xmdf + temp
         argpm  = argpdf - temp
-        t3     = t2 * satellite._t
-        t4     = t3 * satellite._t
+        t3     = t2 * t
+        t4     = t3 * t
         tempa  = tempa - satellite._d2 * t2 - satellite._d3 * t3 - \
                           satellite._d4 * t4
         tempe  = tempe + satellite._bstar * satellite._cc5 * (jnp.sin(mm) -
                           satellite._sinmao)
         templ  = templ + satellite._t3cof * t3 + t4 * (satellite._t4cof +
-                          satellite._t * satellite._t5cof)
+                          t * satellite._t5cof)
 
     nm    = jnp.array(satellite._no_unkozai)
     em    = jnp.array(satellite._ecco)

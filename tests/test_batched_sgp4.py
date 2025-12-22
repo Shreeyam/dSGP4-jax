@@ -1,4 +1,4 @@
-import dsgp4
+import dsgp4_jax
 import numpy as np
 import random
 import sgp4
@@ -26,9 +26,9 @@ class UtilTestCase(unittest.TestCase):
             data.append(lines[i])
             data.append(lines[i+1])
             data.append(lines[i+2])
-            tle=dsgp4.tle.TLE(data)
+            tle=dsgp4_jax.tle.TLE(data)
             try:
-                dsgp4.initialize_tle(tle,gravity_constant_name="wgs-72");
+                dsgp4_jax.initialize_tle(tle,gravity_constant_name="wgs-72");
                 #we only check those that have not failed to initialize:
                 if tle._error==0:
                     #batch mode only supports isimp==0
@@ -36,14 +36,14 @@ class UtilTestCase(unittest.TestCase):
                         tsinces=np.random.rand(100)*10
                         tles_batch+=[tle]*len(tsinces)
                         tsinces_batch+=[tsinces]
-                        out_non_batched+=[dsgp4.propagate(tle,tsinces)]
+                        out_non_batched+=[dsgp4_jax.propagate(tle,tsinces)]
             except Exception as e:
                     self.assertTrue((str(e).split()==error_string.split()) or ((str(e).split()==error_string_isimp.split())))
         tsinces_batch=np.concatenate(tsinces_batch)
         out_non_batched=np.concatenate(out_non_batched)
         #we initialize and then batch propagate all TLEs at all required times:
-        _,tle_batch=dsgp4.initialize_tle(tles_batch,gravity_constant_name="wgs-72")
-        out_batched=dsgp4.propagate_batch(tle_batch,tsinces_batch)
+        _,tle_batch=dsgp4_jax.initialize_tle(tles_batch,gravity_constant_name="wgs-72")
+        out_batched=dsgp4_jax.propagate_batch(tle_batch,tsinces_batch)
         self.assertTrue(np.allclose(np.array(out_non_batched),np.array(out_batched)))
         
     def test_isimp_batched(self):
@@ -57,20 +57,20 @@ class UtilTestCase(unittest.TestCase):
             data.append(lines[i])
             data.append(lines[i+1])
             data.append(lines[i+2])
-            tle = dsgp4.tle.TLE(data)
+            tle = dsgp4_jax.tle.TLE(data)
             try:
-                dsgp4.initialize_tle(tle)
+                dsgp4_jax.initialize_tle(tle)
                 if tle._error==0:
                     tsince = np.random.rand(100)*10
                     tles_batch += [tle]*len(tsince)
                     tsinces_batch+=[tsince]
-                    out_non_batched+=[dsgp4.propagate(tle,tsince)]
+                    out_non_batched+=[dsgp4_jax.propagate(tle,tsince)]
             except Exception as e:
                 self.assertTrue(str(e).split()==error_string.split())
         tsinces_batch = np.concatenate(tsinces_batch)
         out_non_batched = np.concatenate(out_non_batched)
-        _,tle_batch=dsgp4.initialize_tle(tles_batch)
-        out_batched = dsgp4.propagate_batch(tle_batch,tsinces_batch)
+        _,tle_batch=dsgp4_jax.initialize_tle(tles_batch)
+        out_batched = dsgp4_jax.propagate_batch(tle_batch,tsinces_batch)
         self.assertTrue(np.any(np.array([tle._isimp==1 for tle in tles_batch])))
         self.assertTrue(np.allclose(np.array(out_non_batched),np.array(out_batched)))
 

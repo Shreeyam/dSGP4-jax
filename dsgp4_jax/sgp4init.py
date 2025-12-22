@@ -200,4 +200,20 @@ def sgp4init(
                             15.0 * cc1sq * (2.0 * satellite._d2 + cc1sq))
     sgp4(satellite, jnp.zeros((1,1)));
 
+    # Convert arrays back to scalars after initialization call
+    # sgp4 sets these as arrays based on input shape, but they should be scalars
+    # Use squeeze() to remove dimensions while keeping JAX arrays (for gradient tracing)
+    if hasattr(satellite._am, 'shape') and satellite._am.shape == (1, 1):
+        satellite._am = jnp.squeeze(satellite._am)
+    if hasattr(satellite._em, 'shape') and satellite._em.shape == (1, 1):
+        satellite._em = jnp.squeeze(satellite._em)
+    if hasattr(satellite._im, 'shape') and satellite._im.shape == (1, 1):
+        satellite._im = jnp.squeeze(satellite._im)
+    if hasattr(satellite._Om, 'shape') and satellite._Om.shape == (1, 1):
+        satellite._Om = jnp.squeeze(satellite._Om)
+    if hasattr(satellite._mm, 'shape') and satellite._mm.shape == (1, 1):
+        satellite._mm = jnp.squeeze(satellite._mm)
+    if hasattr(satellite._nm, 'shape') and satellite._nm.shape == (1, 1):
+        satellite._nm = jnp.squeeze(satellite._nm)
+
     satellite._init = 'n'

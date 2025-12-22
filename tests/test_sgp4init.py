@@ -1,5 +1,5 @@
 import unittest
-import dsgp4
+import dsgp4_jax
 import sgp4
 import sgp4.io
 import sgp4.earth_gravity
@@ -20,7 +20,7 @@ class UtilTestCase(unittest.TestCase):
             data.append(lines[i])
             data.append(lines[i+1])
             data.append(lines[i+2])
-            tles.append(dsgp4.tle.TLE(data))
+            tles.append(dsgp4_jax.tle.TLE(data))
         for tle_sat in tles:
             satrec=sgp4.io.twoline2rv(tle_sat.line1,tle_sat.line2, whichconst=sgp4.earth_gravity.wgs84)
             sgp4.propagation.sgp4init(whichconst=sgp4.earth_gravity.wgs84,
@@ -39,7 +39,7 @@ class UtilTestCase(unittest.TestCase):
                                 satrec=satrec)
             #I need a try excpet: to exclude the deep space cases
             try:
-                dsgp4.initialize_tle(tle_sat, gravity_constant_name="wgs-84")
+                dsgp4_jax.initialize_tle(tle_sat, gravity_constant_name="wgs-84")
                 self.assertAlmostEqual(satrec.isimp,float(tle_sat._isimp))
                 self.assertTrue(satrec.method==tle_sat._method)
                 self.assertAlmostEqual(satrec.aycof , float(tle_sat._aycof))
@@ -94,7 +94,7 @@ class UtilTestCase(unittest.TestCase):
                 self.assertAlmostEqual(satrec.mm, float(tle_sat._mm))
                 self.assertAlmostEqual(satrec.nm, float(tle_sat._nm))
                 self.assertTrue(satrec.init==tle_sat._init)
-                self.assertAlmostEqual(satrec.t,tle_sat._t[0][0])
+                self.assertAlmostEqual(satrec.t, float(tle_sat._t))
                 self.assertAlmostEqual(satrec.no_unkozai, float(tle_sat._no_unkozai))
                 self.assertAlmostEqual(satrec.gsto, float(tle_sat._gsto))
                 self.assertAlmostEqual(satrec.a, float(tle_sat._a))

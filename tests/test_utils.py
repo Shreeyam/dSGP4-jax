@@ -1,4 +1,4 @@
-import dsgp4
+import dsgp4_jax
 import jax.numpy as jnp
 import sgp4
 import sgp4.earth_gravity
@@ -7,7 +7,7 @@ import numpy as np
 
 class UtilTestCase(unittest.TestCase):
     def test_earth_gravity_constants(self):
-        out=dsgp4.util.get_gravity_constants("wgs-72")
+        out=dsgp4_jax.util.get_gravity_constants("wgs-72")
         tumin,mu,radiusearthkm,xke,j2,j3,j4,j3oj2=out
         self.assertAlmostEqual(float(tumin),sgp4.earth_gravity.wgs72.tumin,places=10)
         self.assertAlmostEqual(float(mu),sgp4.earth_gravity.wgs72.mu,places=10)
@@ -18,7 +18,7 @@ class UtilTestCase(unittest.TestCase):
         self.assertAlmostEqual(float(j4),sgp4.earth_gravity.wgs72.j4,places=10)
         self.assertAlmostEqual(float(j3oj2),sgp4.earth_gravity.wgs72.j3oj2,places=10)
 
-        out=dsgp4.util.get_gravity_constants("wgs-72old")
+        out=dsgp4_jax.util.get_gravity_constants("wgs-72old")
         tumin,mu,radiusearthkm,xke,j2,j3,j4,j3oj2=out
         self.assertAlmostEqual(float(tumin),sgp4.earth_gravity.wgs72old.tumin,places=10)
         self.assertAlmostEqual(float(mu),sgp4.earth_gravity.wgs72old.mu,places=10)
@@ -29,7 +29,7 @@ class UtilTestCase(unittest.TestCase):
         self.assertAlmostEqual(float(j4),sgp4.earth_gravity.wgs72old.j4,places=10)
         self.assertAlmostEqual(float(j3oj2),sgp4.earth_gravity.wgs72old.j3oj2,places=10)
 
-        out=dsgp4.util.get_gravity_constants("wgs-84")
+        out=dsgp4_jax.util.get_gravity_constants("wgs-84")
         tumin,mu,radiusearthkm,xke,j2,j3,j4,j3oj2=out
         self.assertAlmostEqual(float(tumin),sgp4.earth_gravity.wgs84.tumin,places=10)
         self.assertAlmostEqual(float(mu),sgp4.earth_gravity.wgs84.mu,places=10)
@@ -45,17 +45,17 @@ class UtilTestCase(unittest.TestCase):
         lines.append("0 COSMOS 2251 DEB")
         lines.append("1 34427U 93036RU  22068.94647328  .00008100  00000-0  11455-2 0  9999")
         lines.append("2 34427  74.0145 306.8269 0033346  13.0723 347.1308 14.76870515693886")
-        tle=dsgp4.TLE(lines)
-        dsgp4.initialize_tle(tle)
+        tle=dsgp4_jax.TLE(lines)
+        dsgp4_jax.initialize_tle(tle)
         # Extract the state vector from the dSGP4 output
-        st=np.array(dsgp4.sgp4(tle,jnp.array(0.0)))*1e3  # Convert to meters and meters/second
+        st=np.array(dsgp4_jax.sgp4(tle,jnp.array(0.0)))*1e3  # Convert to meters and meters/second
         r_vec = st[0]  # Position vector in meters
         v_vec = st[1]  # Velocity vector in m/s
         # code to generate the poliastro outputs:
         #now let's retrieve the poliastro gravitational parameter of the Earth:
         mu = 398600441800000.0000000000000000#Earth.k.to(u.m**3 / u.s**2).value
         # Let's then convert Cartesian -> Keplerian using our function
-        a, e, i, Omega, omega, M = dsgp4.util.from_cartesian_to_keplerian(r_vec, v_vec, mu)
+        a, e, i, Omega, omega, M = dsgp4_jax.util.from_cartesian_to_keplerian(r_vec, v_vec, mu)
 
         # # Use poliastro to compute the same transformations
         # # Create an orbit from Cartesian state vectors

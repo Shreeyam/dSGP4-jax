@@ -2,7 +2,7 @@ import datetime
 import numpy as np
 import unittest
 
-import dsgp4.tle
+import dsgp4_jax.tle
 
 class UtilTestCase(unittest.TestCase):
     def test_tle(self):
@@ -25,7 +25,7 @@ class UtilTestCase(unittest.TestCase):
             mean_anomaly=4.5224,
             b_star=0.0001)
 
-        tle = dsgp4.tle.TLE(data)
+        tle = dsgp4_jax.tle.TLE(data)
         line1, line2 = tle.line1, tle.line2
         line1Correct = '1 43437U 18100A   20143.90384230  .00041418  00000-0  10000-3 0 99968'
         line2Correct = '2 43437  97.8268 249.9127 0221000 123.9136 259.1144 15.12608579563539'
@@ -52,7 +52,7 @@ class UtilTestCase(unittest.TestCase):
             mean_anomaly=6.0775,
             b_star=-0.0010)
 
-        tle = dsgp4.tle.TLE(data)
+        tle = dsgp4_jax.tle.TLE(data)
         line1, line2 = tle.line1, tle.line2
         line1Correct = '1 43437U 18100A   20143.90384230  .00009660  17108+9 -10000-2 0 99966'
         line2Correct = '2 43437  86.4364 221.8435 0274000 285.0866 348.2151 13.75098708563531'
@@ -64,7 +64,7 @@ class UtilTestCase(unittest.TestCase):
         #Sentinel-1A:
         tle_line1 = '1 39634U 14016A   22059.08188563  .00000057  00000+0  21846-4 0  9990'
         tle_line2 = '2 39634  98.1819  68.1874 0001341  82.4703 277.6657 14.59199732421074'
-        tle = dsgp4.tle.TLE([tle_line1, tle_line2])
+        tle = dsgp4_jax.tle.TLE([tle_line1, tle_line2])
         datetime_object = datetime.datetime.strptime(tle['date_string'], '%Y-%m-%d %H:%M:%S.%f')
 
         #Now the values to validate:
@@ -122,13 +122,13 @@ class UtilTestCase(unittest.TestCase):
         lines_in = ['1 00046U 60007B   22054.60355309  .00000135  00000-0  49836-4 0  9990',
                  '2 00046  66.6904 181.4288 0206178  29.9665 331.3056 14.49532408228403']
 
-        tle = dsgp4.tle.TLE(lines_in)
+        tle = dsgp4_jax.tle.TLE(lines_in)
 
         datetime_object = datetime.datetime.strptime(tle['date_string'], '%Y-%m-%d %H:%M:%S.%f')
         epoch_year = datetime_object.year
-        epoch_days = dsgp4.util.from_datetime_to_fractional_day(datetime_object)
+        epoch_days = dsgp4_jax.util.from_datetime_to_fractional_day(datetime_object)
 
-        tle2 = dsgp4.tle.TLE(data = tle._data)
+        tle2 = dsgp4_jax.tle.TLE(data = tle._data)
         lines_out = [tle2.line1, tle2.line2]
 
         self.assertEqual(lines_in[0], lines_out[0])
@@ -137,8 +137,8 @@ class UtilTestCase(unittest.TestCase):
     def test_load_tles(self):
         tle_1 = ['1 00046U 60007B   22054.60355309  .00000135  00000-0  49836-4 0  9990',
                  '2 00046  66.6904 181.4288 0206178  29.9665 331.3056 14.49532408228403']
-        lines_1, data_1 = dsgp4.tle.load_from_lines(tle_1)
-        lines_2, data_2 = dsgp4.tle.load_from_data(data_1)
+        lines_1, data_1 = dsgp4_jax.tle.load_from_lines(tle_1)
+        lines_2, data_2 = dsgp4_jax.tle.load_from_data(data_1)
         self.assertEqual(tle_1, lines_1)
         self.assertEqual(lines_1, lines_2)
         self.assertEqual(data_1, data_2)
@@ -147,7 +147,7 @@ class UtilTestCase(unittest.TestCase):
         #this test is taken from page 107 of Dr. David Vallado's book: Fundamentals of Astrodynamics and Applications, 4th Edition
         tle_lines=['1 16609U 86017A   93352.53502934  .00007889  00000-0  10529-3 0   342',
                    '2 16609  51.6190  13.3340 0005770 102.5680 257.5950 15.59114070447869']
-        tle=dsgp4.tle.TLE(tle_lines)
+        tle=dsgp4_jax.tle.TLE(tle_lines)
         #TLE elements:
         xpdotp   =  1440.0 / (2.0 *np.pi);
         self.assertAlmostEqual(float(tle._bstar),0.00010529, places = 8)
