@@ -47,7 +47,7 @@ def plot_orbit(states, r_earth=6378.137, elevation_azimuth=None, ax=None, *args,
             y_lon = np.sin(theta) * np.sin(v)
             z_lon = np.cos(v)
             ax.plot(x_lon*r_earth, y_lon*r_earth, z_lon*r_earth, color='black',alpha=0.2)
-    ax.plot(states[:,0,0].numpy(), states[:,0,1].numpy(), states[:,0,2].numpy(),*args, **kwargs)
+    ax.plot(states[:,0,0], states[:,0,1], states[:,0,2],*args, **kwargs)
     ax.legend()
     ax.set_box_aspect([1,1,1])
     if elevation_azimuth is not None:

@@ -60,9 +60,6 @@ def initial_guess_tle(time_mjd, tle_object, gravity_constant_name="wgs-84"):
     ----------------
     TLE: The updated TLE object.
     """
-    #first, let's decompose the time into -> epoch of the year and days 
-    datetime_obj=util.from_mjd_to_datetime(time_mjd)
-    epoch_days=util.from_datetime_to_fractional_day(datetime_obj)
     #then we need to propagate the state, and extract the keplerian elements:
     util.initialize_tle(tle_object,gravity_constant_name=gravity_constant_name)
     tsince=(time_mjd-util.from_datetime_to_mjd(tle_object._epoch))*1440.
@@ -70,12 +67,24 @@ def initial_guess_tle(time_mjd, tle_object, gravity_constant_name="wgs-84"):
     _,mu_earth,_,_,_,_,_,_=util.get_gravity_constants(gravity_constant_name)
     mu_earth=float(mu_earth)*1e9
     kepl_el=util.from_cartesian_to_keplerian(target_state[0],target_state[1],mu_earth)
+
+    # Check if we're at the original epoch (zero-time case)
+    # If so, preserve exact epoch values to avoid precision loss
+    if abs(tsince) < 1e-6:  # Less than ~0.06 seconds
+        epoch_year = tle_object.epoch_year
+        epoch_days = tle_object.epoch_days
+    else:
+        # For non-zero time, compute new epoch from datetime
+        datetime_obj = util.from_mjd_to_datetime(time_mjd)
+        epoch_year = datetime_obj.year
+        epoch_days = util.from_datetime_to_fractional_day(datetime_obj)
+
     #we need to convert the keplerian elements to TLE elements:
     data = dict(
                 satellite_catalog_number=tle_object.satellite_catalog_number,
                 classification=tle_object.classification,
                 international_designator=tle_object.international_designator,
-                epoch_year=datetime_obj.year,
+                epoch_year=epoch_year,
                 epoch_days=epoch_days,
                 ephemeris_type=tle_object.ephemeris_type,
                 element_number=tle_object.element_number,
@@ -110,7 +119,7 @@ def _propagate(x, tle_sat, tsince, gravity_constant_name="wgs-84"):
     state=sgp4(tle_sat, tsince*jnp.ones((1,1)))
     return state
 
-def newton_method(tle0, time_mjd, max_iter=50, new_tol=1e-12, verbose=False, target_state=None, gravity_constant_name="wgs-84"):
+def newton_method(tle0, time_mjd, max_iter=20, new_tol=1e-12, verbose=False, target_state=None, gravity_constant_name="wgs-84"):
     """
     This function implements the Newton-Raphson method to find the TLE elements that match a given target state.
     It uses the SGP4 propagator to propagate the TLE elements and compare them with the target state.
@@ -144,11 +153,21 @@ def newton_method(tle0, time_mjd, max_iter=50, new_tol=1e-12, verbose=False, tar
                         next_tle._no_kozai,
                         next_tle._nodeo,
                     ])
+
+    # Compute tsince relative to next_tle's epoch
+    # For zero-time case: if time_mjd equals tle0's MJD and next_tle's epoch is approximately same,
+    # use tsince=0.0 to avoid floating point precision issues
+    tsince = (time_mjd - util.from_datetime_to_mjd(next_tle._epoch)) * 1440.
+    target_tsince = (time_mjd - util.from_datetime_to_mjd(tle0._epoch)) * 1440.
+
+    # If both tsinces are very small (zero-time case), use 0.0 to avoid precision issues
+    if abs(target_tsince) < 1e-6 and abs(tsince) < 1e-3:
+        tsince = 0.0
+
     def propagate_fn(x):
-        tsince=(time_mjd-util.from_datetime_to_mjd(next_tle._epoch))*1440.
         return _propagate(x,next_tle,tsince,gravity_constant_name=gravity_constant_name).flatten()
 
-    # Compute jacobian using JAX
+    # Compute Jacobian function once
     jacobian_fn = jax.jacobian(propagate_fn)
 
     while i<max_iter and tol>new_tol:
@@ -165,8 +184,8 @@ def newton_method(tle0, time_mjd, max_iter=50, new_tol=1e-12, verbose=False, tar
         # Compute Jacobian
         DF = np.array(jacobian_fn(y0))
 
-        # Solve for update
-        dY = np.linalg.solve(DF, -F)
+        # Solve for update using least squares (more robust than direct solve for ill-conditioned systems)
+        dY, _, _, _ = np.linalg.lstsq(DF, -F, rcond=None)
 
         # Avoid negative or >1 eccentricity
         if y0[0]+dY[0]<0:
@@ -175,7 +194,7 @@ def newton_method(tle0, time_mjd, max_iter=50, new_tol=1e-12, verbose=False, tar
             dY[0] = 1-1e-10 - float(y0[0])
 
         # Update the state
-        y0 = jnp.array([float(a) + float(b) for a, b in zip(y0, dY)])
+        y0 = y0 + jnp.array(dY)
         next_tle = update_TLE(next_tle, y0)
         i+=1
     if verbose:
